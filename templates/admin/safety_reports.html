@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Food Safety Review Queue - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-success text-decoration-none">Admin Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Food Safety Concern Queue</li>
+    </ol>
+  </nav>
+
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="fw-bold mb-0 text-danger">
+          <i class="fa-solid fa-shield-virus me-2"></i> Food Safety Review & Moderation Desk
+        </h4>
+        <p class="small text-muted mb-0">Audit reports filed by volunteers and NGOs to maintain public health standards</p>
+      </div>
+      <span class="badge bg-danger fs-6">{{ reports|length }} Reports Logged</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light text-secondary text-uppercase">
+          <tr>
+            <th class="ps-4">Report ID</th>
+            <th>Donation Target</th>
+            <th>Observed Concern</th>
+            <th>Details & Observation</th>
+            <th>Reported By</th>
+            <th>Review Status</th>
+            <th>Admin Notes</th>
+            <th class="text-end pe-4">Resolution Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+            <tr>
+              <td class="ps-4 fw-bold">#{{ r.id }}</td>
+              <td>
+                <div class="fw-bold text-dark">#{{ r.donation_id }}: {{ r.food_name }}</div>
+                <div class="text-muted">Donor: {{ r.donor_org or r.donor_name }}</div>
+                <span class="badge {{ r.donation_status|badge_status }}">{{ r.donation_status }}</span>
+              </td>
+              <td>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                  {{ r.reason }}
+                </span>
+              </td>
+              <td>
+                <div class="text-secondary" style="max-width: 250px;">{{ r.details }}</div>
+                <div class="text-muted mt-1" style="font-size: 0.72rem;">{{ r.created_at|format_dt('%d %b, %I:%M %p') }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ r.reporter_name }}</div>
+                <div class="text-muted">{{ r.reporter_role|upper }}</div>
+              </td>
+              <td>
+                <span class="badge 
+                  {% if r.status == 'PENDING' %}bg-danger
+                  {% elif r.status == 'INVESTIGATING' %}bg-warning text-dark
+                  {% elif r.status == 'RESOLVED_REMOVED' %}bg-dark
+                  {% else %}bg-success{% endif %}">
+                  {{ r.status }}
+                </span>
+              </td>
+              <td>
+                <div class="text-muted" style="max-width: 200px;">{{ r.admin_notes or 'Pending review' }}</div>
+              </td>
+              <td class="text-end pe-4">
+                <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#resolveModal{{ r.id }}">
+                  Resolve
+                </button>
+
+                <!-- Modal for Resolution -->
+                <div class="modal fade text-start" id="resolveModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content rounded-4 border-0">
+                      <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title fw-bold">Resolve Safety Report #{{ r.id }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form action="{{ url_for('admin_resolve_safety', id=r.id) }}" method="POST">
+                        <div class="modal-body p-4">
+                          <p class="small text-muted">Review reported concern for <strong>{{ r.food_name }}</strong>.</p>
+                          
+                          <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Determination Action *</label>
+                            <select class="form-select" name="action" required>
+                              <option value="DISMISS">Dismiss Report (Verified Safe / Corrective Guidance Given)</option>
+                              <option value="REMOVE_LISTING">Remove Listing (Hazard Detected - Reject Donation)</option>
+                            </select>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Administrative Review Notes *</label>
+                            <textarea class="form-control" name="admin_notes" rows="3" required placeholder="Record verification findings and resolution explanation..."></textarea>
+                          </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success btn-sm fw-bold">Submit Resolution</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-halved fa-3x text-success mb-3 opacity-50"></i>
+                <h6>Clean Hygiene Record</h6>
+                <p class="small mb-0">No food safety concerns have been filed on the system.</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

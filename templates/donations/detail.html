@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% block title %}Donation Tracking #{{ donation.id }} - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-success text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('available_food') }}" class="text-success text-decoration-none">Listings</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Donation #{{ donation.id }}</li>
+    </ol>
+  </nav>
+
+  <!-- Top Status Banner -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white overflow-hidden">
+    <div class="p-4 bg-light border-bottom d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge {{ donation.status|badge_status }} fs-6 px-3 py-1 text-uppercase">{{ donation.status }}</span>
+          <span class="badge {{ donation.urgency_level|urgency_badge }} fs-6 px-3 py-1">
+            <i class="fa-solid fa-bolt me-1"></i> Urgency: {{ donation.urgency_level }} ({{ donation.urgency_score|round(0)|int }}/100)
+          </span>
+        </div>
+        <h3 class="fw-bold text-dark mb-0">Donation #{{ donation.id }}: {{ donation.food_name }}</h3>
+        <p class="text-muted small mb-0">Listed on {{ donation.created_at|format_dt('%d %b %Y, %I:%M %p') }}</p>
+      </div>
+
+      <!-- Action Buttons Based on Role & Status -->
+      <div class="d-flex flex-wrap gap-2">
+        {% if current_user and current_user.role in ('ngo', 'volunteer') and current_user.is_verified %}
+          {% if donation.status == 'AVAILABLE' %}
+            <form action="{{ url_for('accept_donation', id=donation.id) }}" method="POST" data-confirm="Accept this donation for collection?">
+              <button type="submit" class="btn btn-success fw-bold shadow-sm">
+                <i class="fa-solid fa-check-circle me-1"></i> Accept Donation
+              </button>
+            </form>
+          {% elif donation.status == 'ACCEPTED' and donation.recipient_id == current_user.id %}
+            <form action="{{ url_for('confirm_pickup', id=donation.id) }}" method="POST" data-confirm="Confirm that you have picked up the food from the donor?">
+              <button type="submit" class="btn btn-warning text-dark fw-bold shadow-sm">
+                <i class="fa-solid fa-box-open me-1"></i> Confirm Food Pickup
+              </button>
+            </form>
+          {% elif donation.status == 'PICKED_UP' and donation.recipient_id == current_user.id %}
+            <form action="{{ url_for('confirm_delivery', id=donation.id) }}" method="POST" data-confirm="Confirm successful distribution of food to shelter or beneficiaries?">
+              <button type="submit" class="btn btn-success fw-bold shadow-sm">
+                <i class="fa-solid fa-circle-check me-1"></i> Confirm Final Delivery
+              </button>
+            </form>
+          {% endif %}
+        {% endif %}
+
+        {% if current_user and current_user.role == 'donor' and donation.donor_id == current_user.id and donation.status == 'AVAILABLE' %}
+          <a href="{{ url_for('edit_donation', id=donation.id) }}" class="btn btn-outline-warning text-dark fw-semibold">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+          </a>
+          <form action="{{ url_for('cancel_donation', id=donation.id) }}" method="POST" data-confirm="Cancel this donation listing?">
+            <button type="submit" class="btn btn-outline-danger fw-semibold">
+              <i class="fa-solid fa-ban me-1"></i> Cancel
+            </button>
+          </form>
+        {% endif %}
+
+        <!-- Safety Report Trigger Modal Button -->
+        {% if current_user %}
+          <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#safetyReportModal">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i> Flag Safety Concern
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Visual Lifecycle Stepper -->
+    {% if donation.status not in ('CANCELLED', 'EXPIRED', 'REJECTED') %}
+      <div class="px-4 py-3">
+        <div class="lifecycle-stepper">
+          <!-- Step 1: Available -->
+          <div class="step-item completed">
+            <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+            <div class="step-title">1. Available</div>
+            <div class="small text-muted" style="font-size: 0.75rem;">{{ donation.created_at|format_dt('%I:%M %p') }}</div>
+          </div>
+
+          <!-- Step 2: Accepted -->
+          <div class="step-item {% if donation.status in ('ACCEPTED', 'PICKED_UP', 'DELIVERED') %}completed{% elif donation.status == 'AVAILABLE' %}active{% endif %}">
+            <div class="step-circle">
+              {% if donation.status in ('ACCEPTED', 'PICKED_UP', 'DELIVERED') %}<i class="fa-solid fa-check"></i>{% else %}2{% endif %}
+            </div>
+            <div class="step-title">2. Accepted</div>
+            <div class="small text-muted" style="font-size: 0.75rem;">
+              {{ donation.accepted_at|format_dt('%I:%M %p') if donation.accepted_at else 'Pending' }}
+            </div>
+          </div>
+
+          <!-- Step 3: Picked Up -->
+          <div class="step-item {% if donation.status in ('PICKED_UP', 'DELIVERED') %}completed{% elif donation.status == 'ACCEPTED' %}active{% endif %}">
+            <div class="step-circle">
+              {% if donation.status in ('PICKED_UP', 'DELIVERED') %}<i class="fa-solid fa-check"></i>{% else %}3{% endif %}
+            </div>
+            <div class="step-title">3. Picked Up</div>
+            <div class="small text-muted" style="font-size: 0.75rem;">
+              {{ donation.picked_up_at|format_dt('%I:%M %p') if donation.picked_up_at else 'Pending' }}
+            </div>
+          </div>
+
+          <!-- Step 4: Delivered -->
+          <div class="step-item {% if donation.status == 'DELIVERED' %}completed{% elif donation.status == 'PICKED_UP' %}active{% endif %}">
+            <div class="step-circle">
+              {% if donation.status == 'DELIVERED' %}<i class="fa-solid fa-check"></i>{% else %}4{% endif %}
+            </div>
+            <div class="step-title">4. Delivered</div>
+            <div class="small text-muted" style="font-size: 0.75rem;">
+              {{ donation.delivered_at|format_dt('%I:%M %p') if donation.delivered_at else 'Pending' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <!-- Alternate Status Notification Callout -->
+      <div class="p-3 bg-secondary-subtle text-dark border-top small text-center fw-bold">
+        <i class="fa-solid fa-circle-exclamation me-1"></i>
+        This donation lifecycle concluded under termination status: <span class="badge bg-dark">{{ donation.status }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Food Details & Instructions -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h5 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
+          <i class="fa-solid fa-utensils text-success"></i> Food Specification
+        </h5>
+
+        {% if donation.image_url %}
+          <div class="rounded-3 overflow-hidden mb-3" style="max-height: 260px;">
+            <img src="{{ donation.image_url }}" alt="{{ donation.food_name }}" class="w-100 object-fit-cover">
+          </div>
+        {% endif %}
+
+        <p class="text-secondary mb-4">{{ donation.description or 'No additional description provided by donor.' }}</p>
+
+        <div class="row g-3 small">
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3">
+              <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Food Classification</span>
+              <div class="fw-bold fs-6 text-dark mt-1">{{ donation.category }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3">
+              <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Quantity</span>
+              <div class="fw-bold fs-6 text-success mt-1">{{ donation.quantity }} {{ donation.quantity_unit }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3">
+              <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Storage Condition</span>
+              <div class="fw-bold fs-6 text-dark mt-1">{{ donation.storage_condition }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3">
+              <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Preparation Time</span>
+              <div class="fw-bold fs-6 text-dark mt-1">{{ donation.preparation_time|format_dt or 'Not stated' }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded-3">
+              <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Available From</span>
+              <div class="fw-bold fs-6 text-dark mt-1">{{ donation.available_from|format_dt }}</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 bg-danger-subtle rounded-3">
+              <span class="text-danger text-uppercase fw-semibold" style="font-size: 0.75rem;">Pickup Cutoff Deadline</span>
+              <div class="fw-bold fs-6 text-danger mt-1">{{ donation.pickup_deadline|format_dt }}</div>
+            </div>
+          </div>
+        </div>
+
+        {% if donation.allergen_info %}
+          <div class="alert alert-warning border-0 rounded-3 mt-3 mb-0 small">
+            <strong><i class="fa-solid fa-circle-exclamation me-1"></i> Allergen Advisory:</strong> {{ donation.allergen_info }}
+          </div>
+        {% endif %}
+
+        {% if donation.handling_instructions %}
+          <div class="alert alert-info border-0 rounded-3 mt-3 mb-0 small">
+            <strong><i class="fa-solid fa-hand-holding me-1"></i> Special Handling Instructions:</strong> {{ donation.handling_instructions }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Food Safety Concern Reports Queue for this Donation -->
+      {% if safety_reports %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 border-start border-warning border-4">
+          <h5 class="fw-bold text-dark mb-3">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Safety Inspection Observations ({{ safety_reports|length }})
+          </h5>
+          {% for sr in safety_reports %}
+            <div class="p-3 bg-light rounded-3 mb-2 small">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong>Reason: {{ sr.reason }}</strong>
+                <span class="badge bg-warning text-dark">{{ sr.status }}</span>
+              </div>
+              <p class="mb-1 text-secondary">{{ sr.details }}</p>
+              {% if sr.admin_notes %}
+                <div class="text-success mt-1 pt-1 border-top"><strong>Admin Note:</strong> {{ sr.admin_notes }}</div>
+              {% endif %}
+              <div class="text-muted text-end" style="font-size: 0.75rem;">Reported by {{ sr.reporter_name }} on {{ sr.created_at|format_dt }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Parties Involved & Audit Trail -->
+    <div class="col-lg-5">
+      <!-- Donor Details Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.8rem;">Donor Information</h6>
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="bg-success-subtle text-success p-3 rounded-circle">
+            <i class="fa-solid fa-store fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">{{ donation.donor_org or donation.donor_name }}</h5>
+            <div class="small text-muted">{{ donation.donor_type }} &bull; Contact: {{ donation.donor_name }}</div>
+          </div>
+        </div>
+
+        <div class="small text-secondary mb-2">
+          <i class="fa-solid fa-location-dot text-danger me-2"></i>
+          <strong>Pickup Location:</strong><br>
+          <span class="ms-4 text-dark">{{ donation.pickup_address }}, {{ donation.city }}</span>
+        </div>
+
+        {% if current_user and (current_user.role == 'admin' or current_user.id == donation.donor_id or current_user.id == donation.recipient_id) %}
+          <div class="small text-secondary mb-1">
+            <i class="fa-solid fa-phone text-success me-2"></i>
+            <strong>Phone:</strong> <a href="tel:{{ donation.donor_phone }}" class="text-decoration-none">{{ donation.donor_phone }}</a>
+          </div>
+          <div class="small text-secondary">
+            <i class="fa-solid fa-envelope text-primary me-2"></i>
+            <strong>Email:</strong> {{ donation.donor_email }}
+          </div>
+        {% else %}
+          <div class="alert alert-light border small text-muted mb-0 mt-2">
+            <i class="fa-solid fa-lock me-1"></i> Detailed phone and direct dispatch contact are visible once an authorized collector claims the listing.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Recipient NGO / Volunteer Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.8rem;">Assigned Relief Partner</h6>
+        {% if donation.recipient_name %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+              <i class="fa-solid fa-hands-holding-child fa-lg"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">{{ donation.recipient_org or donation.recipient_name }}</h5>
+              <div class="small text-muted">Role: {{ donation.recipient_role|upper }} &bull; Rep: {{ donation.recipient_name }}</div>
+            </div>
+          </div>
+          {% if current_user and (current_user.role == 'admin' or current_user.id == donation.donor_id or current_user.id == donation.recipient_id) %}
+            <div class="small text-secondary">
+              <i class="fa-solid fa-phone text-success me-2"></i>
+              <strong>Phone:</strong> <a href="tel:{{ donation.recipient_phone }}" class="text-decoration-none">{{ donation.recipient_phone }}</a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="text-center py-3 text-muted small">
+            <i class="fa-solid fa-hourglass-start fa-2x mb-2 text-secondary opacity-50"></i>
+            <div>No NGO or volunteer has claimed this donation yet.</div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Audit Trail / Status History -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h6 class="fw-bold text-secondary text-uppercase mb-3" style="font-size: 0.8rem;">Immutable Lifecycle Audit Trail</h6>
+        <div class="timeline">
+          {% for h in history %}
+            <div class="timeline-item">
+              <div class="fw-bold small text-dark">
+                {{ h.to_status }}
+                {% if h.from_status %}
+                  <span class="text-muted fw-normal">(from {{ h.from_status }})</span>
+                {% endif %}
+              </div>
+              <div class="small text-secondary">{{ h.notes }}</div>
+              <div class="text-muted" style="font-size: 0.72rem;">
+                By {{ h.user_name }} ({{ h.user_role }}) &bull; {{ h.created_at|format_dt('%d %b, %I:%M %p') }}
+              </div>
+            </div>
+          {% else %}
+            <div class="small text-muted">No status logs recorded.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Food Safety Flag -->
+<div class="modal fade" id="safetyReportModal" tabindex="-1" aria-labelledby="safetyReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4 border-0">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="safetyReportModalLabel">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i> Report Food Safety Concern
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('report_safety', id=donation.id) }}" method="POST">
+        <div class="modal-body p-4">
+          <p class="small text-muted">
+            Safety flags are immediately routed to system administrators for inspection. If serious hazards exist, the listing will be restricted.
+          </p>
+
+          <div class="mb-3">
+            <label for="reason" class="form-label fw-bold small text-secondary">Primary Nature of Issue *</label>
+            <select class="form-select" id="reason" name="reason" required>
+              <option value="Suspected Spoilage" selected>Suspected Spoilage / Off-Odor / Discoloration</option>
+              <option value="Improper Storage">Improper Storage Temperature (Bacterial Zone)</option>
+              <option value="Unsealed Package">Unsealed Packaging / Physical Contamination</option>
+              <option value="Expired Before Pickup">Passed Expiration Date Prior to Claim</option>
+              <option value="Hygiene Concern">Kitchen Hygiene / Sanitary Notice</option>
+              <option value="Other">Other Safety Anomaly</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="details" class="form-label fw-bold small text-secondary">Specific Observation Details *</label>
+            <textarea class="form-control" id="details" name="details" rows="3" placeholder="Describe the physical condition, odor, container state, or temperature observation..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm fw-bold">Submit Safety Escalation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

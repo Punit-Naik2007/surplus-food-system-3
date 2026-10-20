@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Donor Registration - Surplus Food System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white py-4 px-4 px-md-5">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-white text-success rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="fa-solid fa-store fa-xl"></i>
+            </div>
+            <div>
+              <h4 class="fw-bold mb-0">Food Donor Registration</h4>
+              <p class="small text-white-50 mb-0">For restaurants, hotels, banquet halls, canteens, and caterers</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" action="{{ url_for('register_donor') }}">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label fw-bold small text-secondary">Contact Person Full Name *</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Anand Verma" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="org_name" class="form-label fw-bold small text-secondary">Establishment / Business Name *</label>
+                <input type="text" class="form-control" id="org_name" name="org_name" placeholder="e.g. Spice Garden Restaurant" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="email" class="form-label fw-bold small text-secondary">Business Email Address *</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="manager@establishment.com" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="phone" class="form-label fw-bold small text-secondary">Contact Mobile Number *</label>
+                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 98765 43210" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="donor_type" class="form-label fw-bold small text-secondary">Donor Classification *</label>
+                <select class="form-select" id="donor_type" name="donor_type" required>
+                  <option value="Restaurant" selected>Restaurant</option>
+                  <option value="Hotel">Hotel / Resort</option>
+                  <option value="Canteen">Corporate / College Canteen</option>
+                  <option value="Event Organizer">Event / Banquet Caterer</option>
+                  <option value="Household">Household / Residential Society</option>
+                  <option value="Other">Supermarket / Retail / Other</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="city" class="form-label fw-bold small text-secondary">City / Metro Location *</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="e.g. Bengaluru" required>
+              </div>
+
+              <div class="col-12">
+                <label for="address" class="form-label fw-bold small text-secondary">Full Street Address (Pickup Location) *</label>
+                <textarea class="form-control" id="address" name="address" rows="2" placeholder="e.g. 12th Main Road, Indiranagar, Bengaluru - 560038" required></textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label for="password" class="form-label fw-bold small text-secondary">Create Password (min. 6 characters) *</label>
+                <input type="password" class="form-control" id="password" name="password" minlength="6" placeholder="••••••••" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="confirm_password" class="form-label fw-bold small text-secondary">Confirm Password *</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" placeholder="••••••••" required>
+              </div>
+            </div>
+
+            <div class="form-check my-4">
+              <input class="form-check-input" type="checkbox" id="terms" required checked>
+              <label class="form-check-label small text-muted" for="terms">
+                I agree to list only edible, wholesome surplus food prepared under hygienic conditions, in compliance with applicable food-safety and donation guidelines.
+              </label>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success btn-lg fw-bold shadow">
+                <i class="fa-solid fa-user-plus me-2"></i> Complete Donor Registration
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-4 small">
+            <span class="text-muted">Already have an account?</span>
+            <a href="{{ url_for('login') }}" class="text-success fw-bold ms-1 text-decoration-none">Log in here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

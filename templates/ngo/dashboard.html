@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Collector Dashboard - Surplus Food System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Verification Status Banner if pending -->
+  {% if not current_user.is_verified and current_user.role != 'admin' %}
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 mb-4 rounded-3">
+      <i class="fa-solid fa-clock-rotate-left fa-2x text-warning"></i>
+      <div>
+        <h6 class="fw-bold mb-0">Account Pending Verification</h6>
+        <p class="small mb-0">
+          Your organization credentials are currently under review by an administrator. You can explore available food listings, but cannot accept donations until your authorization is verified.
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill mb-1">
+        <i class="fa-solid fa-truck me-1"></i> Food Relief Operations
+      </span>
+      <h2 class="fw-bold mb-0">{{ current_user.org_name or current_user.name }}</h2>
+      <p class="text-muted small mb-0">
+        {{ current_user.role|upper }} &bull; Service Area: {{ current_user.city }} &bull; 
+        {% if current_user.is_verified %}
+          <span class="badge bg-success-subtle text-success"><i class="fa-solid fa-circle-check me-1"></i> Verified Partner</span>
+        {% else %}
+          <span class="badge bg-warning-subtle text-warning"><i class="fa-solid fa-clock me-1"></i> Pending Verification</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div>
+      <a href="{{ url_for('available_food') }}" class="btn btn-primary fw-bold shadow-sm">
+        <i class="fa-solid fa-magnifying-glass me-1"></i> Find Available Food
+      </a>
+    </div>
+  </div>
+
+  <!-- Operational Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #2e7d32;">
+        <div class="text-secondary small fw-bold text-uppercase">Available In System</div>
+        <div class="fs-3 fw-bold text-success">{{ metrics.total_available }}</div>
+        <div class="small text-muted">Ready for pickup</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #0288d1;">
+        <div class="text-secondary small fw-bold text-uppercase">Awaiting Pickup</div>
+        <div class="fs-3 fw-bold text-primary">{{ metrics.my_accepted }}</div>
+        <div class="small text-muted">Claimed by your team</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #f57c00;">
+        <div class="text-secondary small fw-bold text-uppercase">In Transit</div>
+        <div class="fs-3 fw-bold text-warning">{{ metrics.my_picked_up }}</div>
+        <div class="small text-muted">En route to shelter</div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #00897b;">
+        <div class="text-secondary small fw-bold text-uppercase">Delivered</div>
+        <div class="fs-3 fw-bold text-info">{{ metrics.my_delivered }}</div>
+        <div class="small text-muted">Completed distributions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Relief Tasks (Claimed/In Transit) -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-list-check text-primary me-2"></i> Active Collection Tasks
+      </h5>
+      <span class="badge bg-primary">{{ active_tasks|length }} Active</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-secondary text-uppercase">
+          <tr>
+            <th class="ps-4">ID</th>
+            <th>Food Item</th>
+            <th>Donor & Address</th>
+            <th>Quantity</th>
+            <th>Pickup Cutoff</th>
+            <th>Current Stage</th>
+            <th class="text-end pe-4">Required Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in active_tasks %}
+            <tr>
+              <td class="ps-4 fw-bold text-muted">#{{ task.id }}</td>
+              <td>
+                <div class="fw-bold text-dark">{{ task.food_name }}</div>
+                <span class="badge bg-light text-dark border">{{ task.category }}</span>
+              </td>
+              <td>
+                <div class="fw-bold">{{ task.donor_org or task.donor_name }}</div>
+                <div class="small text-muted"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ task.pickup_address }}, {{ task.city }}</div>
+                <div class="small text-secondary"><i class="fa-solid fa-phone me-1"></i> {{ task.donor_phone }}</div>
+              </td>
+              <td class="fw-bold">{{ task.quantity }} {{ task.quantity_unit }}</td>
+              <td class="small text-danger fw-semibold">
+                {{ task.pickup_deadline|format_dt('%d %b, %I:%M %p') }}
+              </td>
+              <td>
+                <span class="badge {{ task.status|badge_status }}">{{ task.status }}</span>
+              </td>
+              <td class="text-end pe-4">
+                {% if task.status == 'ACCEPTED' %}
+                  <!-- Action 1: Confirm Pickup -->
+                  <form action="{{ url_for('confirm_pickup', id=task.id) }}" method="POST" class="d-inline" data-confirm="Confirm physical food pickup at donor location?">
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold">
+                      <i class="fa-solid fa-box-open me-1"></i> Mark Picked Up
+                    </button>
+                  </form>
+                {% elif task.status == 'PICKED_UP' %}
+                  <!-- Action 2: Confirm Delivery -->
+                  <form action="{{ url_for('confirm_delivery', id=task.id) }}" method="POST" class="d-inline" data-confirm="Confirm food delivery to community shelter?">
+                    <button type="submit" class="btn btn-success btn-sm fw-bold">
+                      <i class="fa-solid fa-circle-check me-1"></i> Mark Delivered
+                    </button>
+                  </form>
+                {% endif %}
+                <a href="{{ url_for('view_donation', id=task.id) }}" class="btn btn-outline-secondary btn-sm ms-1">
+                  Track
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-box-archive fa-3x text-secondary mb-3 opacity-50"></i>
+                <h6>No active tasks in your queue right now.</h6>
+                <p class="small mb-3">Browse available donations to claim surplus food for your relief center.</p>
+                <a href="{{ url_for('available_food') }}" class="btn btn-primary btn-sm fw-bold">
+                  <i class="fa-solid fa-magnifying-glass me-1"></i> Find Available Food
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Urgent Opportunities Nearby -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-fire text-danger me-2"></i> High Priority Available Food
+      </h5>
+      <a href="{{ url_for('available_food') }}" class="small text-decoration-none fw-bold text-success">View All</a>
+    </div>
+
+    <div class="card-body p-4">
+      <div class="row g-3">
+        {% for item in urgent_listings %}
+          <div class="col-md-6 col-lg-3">
+            <div class="card card-custom h-100 border">
+              <div class="p-3 d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge {{ item.urgency_level|urgency_badge }}">{{ item.urgency_level }}</span>
+                  <span class="small text-muted">{{ item.city }}</span>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">{{ item.food_name }}</h6>
+                <p class="small text-muted flex-grow-1">{{ item.description|truncate(70) }}</p>
+                
+                <div class="bg-light p-2 rounded small mb-3">
+                  <div class="d-flex justify-content-between">
+                    <span>Qty:</span>
+                    <strong>{{ item.quantity }} {{ item.quantity_unit }}</strong>
+                  </div>
+                  <div class="d-flex justify-content-between text-danger">
+                    <span>Deadline:</span>
+                    <strong>{{ item.pickup_deadline|format_dt('%I:%M %p') }}</strong>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <a href="{{ url_for('view_donation', id=item.id) }}" class="btn btn-outline-secondary btn-sm flex-fill">Details</a>
+                  {% if current_user.is_verified %}
+                    <form action="{{ url_for('accept_donation', id=item.id) }}" method="POST" class="flex-fill" data-confirm="Accept this donation for collection?">
+                      <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Accept</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="col-12 text-center text-muted py-3">
+            No pending available donations.
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

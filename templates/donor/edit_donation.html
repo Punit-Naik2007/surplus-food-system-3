@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Edit Listing #{{ donation.id }} - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('donor_dashboard') }}" class="text-success text-decoration-none">Donor Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('view_donation', id=donation.id) }}" class="text-success text-decoration-none">Listing #{{ donation.id }}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Edit Listing</li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-warning text-dark py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-pen-to-square fa-lg"></i>
+            <h4 class="fw-bold mb-0">Modify Surplus Food Listing #{{ donation.id }}</h4>
+          </div>
+          <p class="small text-muted mb-0">Updates are permissible while the listing status remains 'AVAILABLE'</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" action="{{ url_for('edit_donation', id=donation.id) }}">
+            <div class="row g-3 mb-4">
+              <div class="col-md-8">
+                <label for="food_name" class="form-label fw-bold small text-secondary">Food Item Title *</label>
+                <input type="text" class="form-control" id="food_name" name="food_name" value="{{ donation.food_name }}" required>
+              </div>
+
+              <div class="col-md-4">
+                <label for="category" class="form-label fw-bold small text-secondary">Food Category *</label>
+                <select class="form-select" id="category" name="category" required>
+                  <option value="Cooked Meals" {% if donation.category == 'Cooked Meals' %}selected{% endif %}>Cooked Meals</option>
+                  <option value="Bakery Items" {% if donation.category == 'Bakery Items' %}selected{% endif %}>Bakery Items</option>
+                  <option value="Fruits" {% if donation.category == 'Fruits' %}selected{% endif %}>Fresh Fruits</option>
+                  <option value="Vegetables" {% if donation.category == 'Vegetables' %}selected{% endif %}>Fresh Vegetables</option>
+                  <option value="Packaged Food" {% if donation.category == 'Packaged Food' %}selected{% endif %}>Packaged Grocery</option>
+                  <option value="Other" {% if donation.category == 'Other' %}selected{% endif %}>Other Edible Food</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="quantity" class="form-label fw-bold small text-secondary">Surplus Quantity *</label>
+                <input type="number" step="0.1" min="0.5" class="form-control" id="quantity" name="quantity" value="{{ donation.quantity }}" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="quantity_unit" class="form-label fw-bold small text-secondary">Unit of Measurement *</label>
+                <select class="form-select" id="quantity_unit" name="quantity_unit" required>
+                  <option value="servings" {% if donation.quantity_unit == 'servings' %}selected{% endif %}>Servings (Plates / Meals)</option>
+                  <option value="kg" {% if donation.quantity_unit == 'kg' %}selected{% endif %}>Kilograms (Kg)</option>
+                  <option value="packages" {% if donation.quantity_unit == 'packages' %}selected{% endif %}>Packages / Boxes</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label for="description" class="form-label fw-bold small text-secondary">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="2">{{ donation.description or '' }}</textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label for="storage_condition" class="form-label fw-bold small text-secondary">Current Storage Condition *</label>
+                <select class="form-select" id="storage_condition" name="storage_condition" required>
+                  <option value="Room Temperature" {% if donation.storage_condition == 'Room Temperature' %}selected{% endif %}>Ambient / Room Temperature</option>
+                  <option value="Insulated Container" {% if donation.storage_condition == 'Insulated Container' %}selected{% endif %}>Insulated / Thermal Container</option>
+                  <option value="Refrigerated" {% if donation.storage_condition == 'Refrigerated' %}selected{% endif %}>Refrigerated (Chilled)</option>
+                  <option value="Frozen" {% if donation.storage_condition == 'Frozen' %}selected{% endif %}>Deep Frozen</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="pickup_deadline" class="form-label fw-bold small text-secondary">Pickup Deadline *</label>
+                <input type="text" class="form-control" id="pickup_deadline" name="pickup_deadline" value="{{ donation.pickup_deadline }}" required>
+              </div>
+
+              <div class="col-md-8">
+                <label for="pickup_address" class="form-label fw-bold small text-secondary">Pickup Street Address *</label>
+                <input type="text" class="form-control" id="pickup_address" name="pickup_address" value="{{ donation.pickup_address }}" required>
+              </div>
+
+              <div class="col-md-4">
+                <label for="city" class="form-label fw-bold small text-secondary">City / Region *</label>
+                <input type="text" class="form-control" id="city" name="city" value="{{ donation.city }}" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="allergen_info" class="form-label fw-bold small text-secondary">Allergen Information</label>
+                <input type="text" class="form-control" id="allergen_info" name="allergen_info" value="{{ donation.allergen_info or '' }}">
+              </div>
+
+              <div class="col-md-6">
+                <label for="handling_instructions" class="form-label fw-bold small text-secondary">Special Handling Instructions</label>
+                <input type="text" class="form-control" id="handling_instructions" name="handling_instructions" value="{{ donation.handling_instructions or '' }}">
+              </div>
+
+              <div class="col-12">
+                <label for="image_url" class="form-label fw-bold small text-secondary">Food Image URL</label>
+                <input type="url" class="form-control" id="image_url" name="image_url" value="{{ donation.image_url or '' }}">
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3">
+              <a href="{{ url_for('view_donation', id=donation.id) }}" class="btn btn-outline-secondary px-4">Cancel</a>
+              <button type="submit" class="btn btn-warning fw-bold px-4 shadow-sm">
+                <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

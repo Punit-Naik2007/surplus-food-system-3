@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}NGO & Volunteer Registration - Surplus Food System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-primary text-white py-4 px-4 px-md-5">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-white text-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="fa-solid fa-hands-holding-child fa-xl"></i>
+            </div>
+            <div>
+              <h4 class="fw-bold mb-0">NGO & Volunteer Registration</h4>
+              <p class="small text-white-50 mb-0">Authorized food rescue partners, shelters, and relief distribution agents</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <!-- Verification Notice Banner -->
+          <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3 mb-4 rounded-3">
+            <i class="fa-solid fa-circle-info fa-2x text-primary"></i>
+            <div class="small">
+              <strong>Account Verification Process:</strong> To safeguard public health and ensure food integrity, newly registered NGOs and volunteers are reviewed by an administrator before donation acceptance privileges are activated.
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('register_ngo') }}">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="user_type" class="form-label fw-bold small text-secondary">Applicant Classification *</label>
+                <select class="form-select" id="user_type" name="user_type" required>
+                  <option value="ngo" selected>Registered NGO / Trust / Charity</option>
+                  <option value="volunteer">Individual Volunteer / Community Food Runner</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label for="name" class="form-label fw-bold small text-secondary">Organization / Group Name *</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Anna Seva Feeding Foundation" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="contact_person" class="form-label fw-bold small text-secondary">Primary Contact Person *</label>
+                <input type="text" class="form-control" id="contact_person" name="contact_person" placeholder="e.g. Ramesh Kumar" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="email" class="form-label fw-bold small text-secondary">Official Email Address *</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="relief@organization.org" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="phone" class="form-label fw-bold small text-secondary">Dispatch Contact Phone *</label>
+                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 98450 12345" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="city" class="form-label fw-bold small text-secondary">Primary Service City / Area *</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="e.g. Bengaluru" required>
+              </div>
+
+              <div class="col-12">
+                <label for="address" class="form-label fw-bold small text-secondary">Shelter / Organization Headquarters Address</label>
+                <textarea class="form-control" id="address" name="address" rows="2" placeholder="e.g. Koramangala Community Relief Centre, Bengaluru"></textarea>
+              </div>
+
+              <div class="col-12">
+                <label for="capacity_info" class="form-label fw-bold small text-secondary">Approximate Food Handling Capacity</label>
+                <input type="text" class="form-control" id="capacity_info" name="capacity_info" placeholder="e.g. 200 meals daily / Two-wheeler with 30 kg thermal bag">
+                <div class="form-text small">Helps donors match large batch surplus with capable collectors.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="password" class="form-label fw-bold small text-secondary">Password (min. 6 characters) *</label>
+                <input type="password" class="form-control" id="password" name="password" minlength="6" placeholder="••••••••" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="confirm_password" class="form-label fw-bold small text-secondary">Confirm Password *</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" placeholder="••••••••" required>
+              </div>
+            </div>
+
+            <div class="form-check my-4">
+              <input class="form-check-input" type="checkbox" id="terms" required checked>
+              <label class="form-check-label small text-muted" for="terms">
+                I agree to observe hygienic food handling practices, thermal chain preservation, and immediate community redistribution to vulnerable beneficiaries.
+              </label>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold shadow">
+                <i class="fa-solid fa-clipboard-check me-2"></i> Submit for Authorization
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-4 small">
+            <span class="text-muted">Already have an authorized account?</span>
+            <a href="{{ url_for('login') }}" class="text-primary fw-bold ms-1 text-decoration-none">Sign in here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

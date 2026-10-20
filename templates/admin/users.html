@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}User Management - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-success text-decoration-none">Admin Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">User Accounts</li>
+    </ol>
+  </nav>
+
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <h4 class="fw-bold mb-0 text-dark">User Account Governance</h4>
+          <p class="small text-muted mb-0">Role management, NGO authorization, and access controls</p>
+        </div>
+
+        <div class="col-md-8 d-flex flex-wrap justify-content-md-end gap-2">
+          <!-- Role Filters -->
+          <div class="btn-group btn-group-sm" role="group">
+            <a href="{{ url_for('admin_users', role='ALL') }}" class="btn {{ 'btn-dark' if current_role == 'ALL' else 'btn-outline-secondary' }}">All</a>
+            <a href="{{ url_for('admin_users', role='donor') }}" class="btn {{ 'btn-dark' if current_role == 'donor' else 'btn-outline-secondary' }}">Donors</a>
+            <a href="{{ url_for('admin_users', role='ngo') }}" class="btn {{ 'btn-dark' if current_role == 'ngo' else 'btn-outline-secondary' }}">NGOs</a>
+            <a href="{{ url_for('admin_users', role='volunteer') }}" class="btn {{ 'btn-dark' if current_role == 'volunteer' else 'btn-outline-secondary' }}">Volunteers</a>
+            <a href="{{ url_for('admin_users', role='admin') }}" class="btn {{ 'btn-dark' if current_role == 'admin' else 'btn-outline-secondary' }}">Admins</a>
+          </div>
+
+          <!-- Instant Table Search -->
+          <input type="text" id="tableSearchInput" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Search user, org, city...">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 searchable-table">
+        <thead class="table-light small text-secondary text-uppercase">
+          <tr>
+            <th class="ps-4">ID</th>
+            <th>Name & Organization</th>
+            <th>Role</th>
+            <th>Email & Phone</th>
+            <th>Location</th>
+            <th>Capacity / Type</th>
+            <th>Verification</th>
+            <th>Account State</th>
+            <th class="text-end pe-4">Management</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td class="ps-4 fw-bold text-muted">#{{ u.id }}</td>
+              <td>
+                <div class="fw-bold text-dark">{{ u.name }}</div>
+                {% if u.org_name %}
+                  <div class="small text-muted">{{ u.org_name }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge 
+                  {% if u.role == 'admin' %}bg-dark
+                  {% elif u.role == 'donor' %}bg-success
+                  {% elif u.role == 'ngo' %}bg-primary
+                  {% else %}bg-warning text-dark{% endif %} text-uppercase">
+                  {{ u.role }}
+                </span>
+              </td>
+              <td class="small">
+                <div><i class="fa-solid fa-envelope text-muted me-1"></i> {{ u.email }}</div>
+                <div class="text-secondary"><i class="fa-solid fa-phone text-muted me-1"></i> {{ u.phone }}</div>
+              </td>
+              <td class="small">{{ u.city }}</td>
+              <td class="small text-muted">
+                {{ u.donor_type or u.capacity_info or '-' }}
+              </td>
+              <td>
+                {% if u.is_verified %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="fa-solid fa-circle-check me-1"></i> Verified
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-danger border border-warning-subtle">
+                    <i class="fa-solid fa-clock me-1"></i> Unverified
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.is_active %}
+                  <span class="badge bg-light text-success border"><i class="fa-solid fa-circle text-success me-1" style="font-size: 0.5rem;"></i> Active</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border"><i class="fa-solid fa-circle text-danger me-1" style="font-size: 0.5rem;"></i> Disabled</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-1">
+                  <!-- NGO Verification Action -->
+                  {% if u.role in ('ngo', 'volunteer') and not u.is_verified %}
+                    <form action="{{ url_for('admin_verify_user', id=u.id) }}" method="POST" data-confirm="Approve and verify {{ u.name }} for food collection?">
+                      <button type="submit" class="btn btn-sm btn-success fw-bold" title="Verify Organization">
+                        <i class="fa-solid fa-certificate"></i> Verify
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  <!-- Toggle Active / Disabled Account -->
+                  {% if u.id != current_user.id %}
+                    <form action="{{ url_for('admin_toggle_user', id=u.id) }}" method="POST" data-confirm="Toggle account status for {{ u.name }}?">
+                      <button type="submit" class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}" title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                        <i class="fa-solid {{ 'fa-user-slash' if u.is_active else 'fa-user-check' }}"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                No users found matching filter criteria.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

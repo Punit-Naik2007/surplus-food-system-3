@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}500 Internal Error - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-5 bg-white">
+        <i class="fa-solid fa-triangle-exclamation fa-4x text-warning mb-3"></i>
+        <h2 class="fw-bold text-dark">500 - Internal Server Error</h2>
+        <p class="text-secondary mb-4">
+          An unexpected exception occurred while processing this transaction. Our database safeguards maintain transactional integrity.
+        </p>
+        <div>
+          <a href="{{ url_for('index') }}" class="btn btn-success fw-bold px-4">
+            <i class="fa-solid fa-house me-1"></i> Return to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

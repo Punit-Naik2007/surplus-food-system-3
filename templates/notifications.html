@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Notifications - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="fw-bold text-dark mb-0">
+            <i class="fa-solid fa-bell text-success me-2"></i> Notification Center
+          </h3>
+          <p class="text-muted small mb-0">Real-time alerts on food donation events, status transitions, and safety notices</p>
+        </div>
+
+        {% if notifications %}
+          <form action="{{ url_for('mark_all_notifications_read') }}" method="POST">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+              <i class="fa-solid fa-check-double me-1"></i> Mark All as Read
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="list-group list-group-flush">
+          {% for n in notifications %}
+            <div class="list-group-item p-4 {{ 'bg-light' if not n.is_read else '' }} notification-item" 
+                 data-notif-id="{{ n.id }}" data-read="{{ 1 if n.is_read else 0 }}">
+              <div class="d-flex justify-content-between align-items-start gap-3">
+                <div class="d-flex gap-3">
+                  <div class="mt-1">
+                    <span class="badge rounded-circle p-2 {{ 'bg-success' if not n.is_read else 'bg-secondary' }}">
+                      <i class="fa-solid fa-message text-white"></i>
+                    </span>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-1">{{ n.title }}</h6>
+                    <p class="text-secondary small mb-2">{{ n.message }}</p>
+                    <div class="text-muted" style="font-size: 0.75rem;">
+                      {{ n.created_at|format_dt('%d %b %Y, %I:%M %p') }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  {% if n.link %}
+                    <a href="{{ n.link }}" class="btn btn-outline-success btn-sm fw-bold">
+                      View
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-bell-slash fa-3x mb-3 opacity-50"></i>
+              <h6>Your notification inbox is clean.</h6>
+              <p class="small mb-0">You will receive in-app alerts whenever donations are listed, claimed, or delivered.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

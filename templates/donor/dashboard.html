@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Donor Dashboard - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header Title Bar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <span class="badge bg-success-subtle text-success fw-bold px-3 py-1 rounded-pill mb-1">
+        <i class="fa-solid fa-store me-1"></i> Food Donor Portal
+      </span>
+      <h2 class="fw-bold mb-0">{{ current_user.org_name or current_user.name }}</h2>
+      <p class="text-muted small mb-0">{{ current_user.donor_type }} &bull; {{ current_user.city }} &bull; {{ current_user.phone }}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('add_donation') }}" class="btn btn-success fw-bold shadow-sm">
+        <i class="fa-solid fa-plus-circle me-1"></i> List New Surplus Food
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #2e7d32;">
+        <div class="text-secondary small fw-bold text-uppercase">Total Listed</div>
+        <div class="fs-3 fw-bold text-success">{{ metrics.total_listed }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #43a047;">
+        <div class="text-secondary small fw-bold text-uppercase">Available</div>
+        <div class="fs-3 fw-bold text-success">{{ metrics.total_available }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #0288d1;">
+        <div class="text-secondary small fw-bold text-uppercase">Accepted</div>
+        <div class="fs-3 fw-bold text-primary">{{ metrics.total_accepted }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #f57c00;">
+        <div class="text-secondary small fw-bold text-uppercase">In Transit</div>
+        <div class="fs-3 fw-bold text-warning">{{ metrics.total_picked_up }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #00897b;">
+        <div class="text-secondary small fw-bold text-uppercase">Delivered</div>
+        <div class="fs-3 fw-bold text-info">{{ metrics.total_delivered }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="card stat-card p-3 h-100" style="border-left-color: #78909c;">
+        <div class="text-secondary small fw-bold text-uppercase">Closed/Expired</div>
+        <div class="fs-3 fw-bold text-secondary">{{ metrics.total_inactive }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listings Table & Controls -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <h5 class="fw-bold mb-0">Your Food Donation Listings</h5>
+        </div>
+        <div class="col-md-8 d-flex flex-wrap justify-content-md-end gap-2">
+          <!-- Filter Buttons -->
+          <div class="btn-group btn-group-sm" role="group">
+            <a href="{{ url_for('donor_dashboard', status='ALL') }}" class="btn {{ 'btn-success' if filter_status == 'ALL' else 'btn-outline-secondary' }}">All</a>
+            <a href="{{ url_for('donor_dashboard', status='AVAILABLE') }}" class="btn {{ 'btn-success' if filter_status == 'AVAILABLE' else 'btn-outline-secondary' }}">Available</a>
+            <a href="{{ url_for('donor_dashboard', status='ACCEPTED') }}" class="btn {{ 'btn-success' if filter_status == 'ACCEPTED' else 'btn-outline-secondary' }}">Accepted</a>
+            <a href="{{ url_for('donor_dashboard', status='PICKED_UP') }}" class="btn {{ 'btn-success' if filter_status == 'PICKED_UP' else 'btn-outline-secondary' }}">Picked Up</a>
+            <a href="{{ url_for('donor_dashboard', status='DELIVERED') }}" class="btn {{ 'btn-success' if filter_status == 'DELIVERED' else 'btn-outline-secondary' }}">Delivered</a>
+          </div>
+
+          <!-- Instant Live Table Search -->
+          <input type="text" id="tableSearchInput" class="form-control form-control-sm" style="max-width: 200px;" placeholder="Search your items...">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 searchable-table">
+        <thead class="table-light small text-secondary text-uppercase">
+          <tr>
+            <th class="ps-4">ID</th>
+            <th>Food Item</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Urgency</th>
+            <th>Pickup Deadline</th>
+            <th>Claimed Recipient</th>
+            <th>Status</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in donations %}
+            <tr>
+              <td class="ps-4 fw-bold text-muted">#{{ item.id }}</td>
+              <td>
+                <div class="fw-bold text-dark">{{ item.food_name }}</div>
+                <div class="text-muted small text-truncate" style="max-width: 220px;">{{ item.description }}</div>
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ item.category }}</span></td>
+              <td class="fw-bold">{{ item.quantity }} <span class="small text-muted">{{ item.quantity_unit }}</span></td>
+              <td>
+                <span class="badge {{ item.urgency_level|urgency_badge }}">{{ item.urgency_level }}</span>
+              </td>
+              <td class="small">
+                {{ item.pickup_deadline|format_dt('%d %b, %I:%M %p') }}
+              </td>
+              <td>
+                {% if item.recipient_name %}
+                  <span class="text-primary fw-semibold small">
+                    <i class="fa-solid fa-hands-holding-child me-1"></i> {{ item.recipient_org or item.recipient_name }}
+                  </span>
+                {% else %}
+                  <span class="text-muted small font-monospace">Awaiting Claim</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {{ item.status|badge_status }}">{{ item.status }}</span>
+              </td>
+              <td class="text-end pe-4">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Manage
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('view_donation', id=item.id) }}">
+                        <i class="fa-solid fa-eye me-2 text-info"></i> Track Lifecycle
+                      </a>
+                    </li>
+                    {% if item.status == 'AVAILABLE' %}
+                      <li>
+                        <a class="dropdown-item" href="{{ url_for('edit_donation', id=item.id) }}">
+                          <i class="fa-solid fa-pen-to-square me-2 text-warning"></i> Edit Listing
+                        </a>
+                      </li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <form action="{{ url_for('cancel_donation', id=item.id) }}" method="POST" data-confirm="Are you sure you want to cancel this donation listing?">
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="fa-solid fa-ban me-2"></i> Cancel Listing
+                          </button>
+                        </form>
+                      </li>
+                    {% elif item.status == 'ACCEPTED' %}
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <form action="{{ url_for('cancel_donation', id=item.id) }}" method="POST" data-confirm="Cancel this accepted donation? The NGO will be notified.">
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="fa-solid fa-ban me-2"></i> Cancel Acceptance
+                          </button>
+                        </form>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-utensils fa-3x text-secondary mb-3 opacity-50"></i>
+                <h5>No food donation listings found.</h5>
+                <p class="small mb-3">You haven't listed any surplus food under this view yet.</p>
+                <a href="{{ url_for('add_donation') }}" class="btn btn-success btn-sm fw-bold">
+                  <i class="fa-solid fa-plus me-1"></i> List Food Now
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

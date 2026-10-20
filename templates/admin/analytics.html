@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Data, Statistics & ML Analytics - College Nirman Lab Exhibition{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-success text-decoration-none">Admin Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Data Analytics & ML Architecture</li>
+    </ol>
+  </nav>
+
+  <!-- Banner: Academic Theme -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 border-start border-success border-5">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-8">
+        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2 fw-bold text-uppercase">
+          <i class="fa-solid fa-graduation-cap me-1"></i> Exhibition Theme: "Data, Statistics & ML for Real India"
+        </span>
+        <h2 class="fw-bold text-dark mb-2">Quantitative Empirical Analytics & Triage Engine</h2>
+        <p class="text-secondary small mb-0">
+          Rigorous mathematical modeling of urban food redistribution logistics. Measures conversion throughput, unit-specific recovery volumes, and multi-factor perishability risk scoring.
+        </p>
+      </div>
+
+      <div class="col-lg-4 text-lg-end">
+        <span class="badge bg-light text-secondary border p-2 small">
+          <i class="fa-solid fa-database me-1"></i> Transparent Synthetic Benchmarks
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics & Delivery Rate Definition Section (Section 14) -->
+  <div class="row g-3 mb-4">
+    <!-- Metric 1: Delivery Rate with Formula Explanation -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-uppercase small fw-bold text-muted">Donation Delivery Rate</span>
+          <span class="badge bg-success fs-6">{{ stats.delivery_rate }}%</span>
+        </div>
+        <div class="fs-1 fw-bold text-dark mb-2">{{ stats.delivery_rate }}%</div>
+        <div class="p-3 bg-light rounded-3 small">
+          <strong class="text-dark d-block mb-1">Standard Mathematical Definition:</strong>
+          <code class="text-success fw-bold d-block mb-2">
+            Delivery Rate = (Delivered / (Total Listed - Cancelled)) × 100
+          </code>
+          <span class="text-muted" style="font-size: 0.78rem;">
+            Excludes donor-cancelled records from denominator to accurately isolate logistics operational efficacy.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metric 2: Unit-Specific Volume Breakdown (Scientific Integrity: Zero unit mixing) -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-scale-balanced text-primary me-2"></i> Food Recovery Volumes (Separated by Distinct Units)
+          </h5>
+          <span class="badge bg-light text-muted border">No Unit Conflation</span>
+        </div>
+        <div class="row g-3 text-center">
+          <!-- Servings -->
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="text-secondary small fw-bold text-uppercase">Cooked Meals (Servings)</div>
+              <div class="fs-3 fw-bold text-success">{{ stats.unit_stats.servings.delivered if stats.unit_stats.servings else 0 }}</div>
+              <div class="small text-muted">of {{ stats.unit_stats.servings.listed if stats.unit_stats.servings else 0 }} listed delivered</div>
+            </div>
+          </div>
+          <!-- Kilograms -->
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="text-secondary small fw-bold text-uppercase">Fresh Produce (Kg)</div>
+              <div class="fs-3 fw-bold text-primary">{{ stats.unit_stats.kg.delivered if stats.unit_stats.kg else 0 }} kg</div>
+              <div class="small text-muted">of {{ stats.unit_stats.kg.listed if stats.unit_stats.kg else 0 }} kg listed delivered</div>
+            </div>
+          </div>
+          <!-- Packages -->
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="text-secondary small fw-bold text-uppercase">Packaged Food (Pkgs)</div>
+              <div class="fs-3 fw-bold text-warning">{{ stats.unit_stats.packages.delivered if stats.unit_stats.packages else 0 }}</div>
+              <div class="small text-muted">of {{ stats.unit_stats.packages.listed if stats.unit_stats.packages else 0 }} pkgs listed delivered</div>
+            </div>
+          </div>
+        </div>
+        <div class="text-muted small mt-3" style="font-size: 0.8rem;">
+          <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+          <strong>Scientific Method Notice:</strong> Cooked servings, produce kilograms, and packaged dry rations cannot be added arithmetically into a single aggregate without distorting thermodynamic and volumetric data.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Visualizations -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: Unit Comparison -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold text-dark mb-1">Volume Listed vs. Delivered by Unit</h5>
+        <p class="text-muted small mb-3">Comparing throughput across servings, kilograms, and packages</p>
+        <div style="position: relative; height: 280px;">
+          <canvas id="unitComparisonChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Geographic Distribution -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold text-dark mb-1">Geographic Distribution of Listings</h5>
+        <p class="text-muted small mb-3">Concentration across metropolitan relief zones</p>
+        <div style="position: relative; height: 280px;">
+          <canvas id="cityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ML / Data-Driven Urgency Algorithm Section (Section 15) -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+      <div>
+        <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold text-uppercase mb-2">
+          <i class="fa-solid fa-brain me-1"></i> Machine Learning / Heuristic Optimization
+        </span>
+        <h4 class="fw-bold text-dark mb-0">{{ ml_metadata.engine_name }}</h4>
+        <p class="text-muted small mb-0">{{ ml_metadata.description }}</p>
+      </div>
+      <span class="badge bg-success fs-6"><i class="fa-solid fa-check-double me-1"></i> Real-Time Active</span>
+    </div>
+
+    <!-- Formula KaTeX Presentation -->
+    <div class="p-4 bg-light rounded-4 mb-4 text-center border">
+      <div class="small text-muted text-uppercase fw-bold mb-2">Algorithmic Formulation</div>
+      <div class="fs-5 fw-bold text-dark font-monospace mb-2">
+        Urgency Priority Score = (0.50 × F<sub>time</sub>) + (0.25 × F<sub>perish</sub>) + (0.15 × F<sub>temp</sub>) + (0.10 × F<sub>volume</sub>)
+      </div>
+      <div class="small text-secondary">
+        Output Scale: 0 to 100 &bull; Critical (80-100) | High (55-79) | Moderate (30-54) | Stable (0-29)
+      </div>
+    </div>
+
+    <!-- Features Breakdown Table -->
+    <h6 class="fw-bold text-dark mb-3">Input Feature Parameters & Calibration Weights</h6>
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered align-middle small mb-0">
+        <thead class="table-light text-uppercase">
+          <tr>
+            <th>Feature Name</th>
+            <th>Weight</th>
+            <th>Measurement Unit</th>
+            <th>Empirical / FSSAI Justification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in ml_metadata.features %}
+            <tr>
+              <td class="fw-bold text-dark">{{ f.name }}</td>
+              <td><span class="badge bg-primary">{{ f.weight }}</span></td>
+              <td class="font-monospace">{{ f.unit }}</td>
+              <td class="text-secondary">{{ f.explanation }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-3 bg-light rounded-3 small text-muted border">
+      <i class="fa-solid fa-graduation-cap me-1 text-success"></i>
+      <strong>Academic Exhibition Notice:</strong> {{ ml_metadata.validation_note }}. No synthetic performance figures are represented as verified field trials.
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

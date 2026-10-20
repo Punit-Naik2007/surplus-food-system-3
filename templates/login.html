@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Sign In - Surplus Food Redistribution System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      
+      <!-- Demo Fast Access Notice Card -->
+      <div class="card border-0 shadow-sm bg-light mb-4 rounded-4 border-start border-success border-4">
+        <div class="card-body p-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-success"><i class="fa-solid fa-flask me-1"></i> Exhibition Demo Switcher</span>
+            <small class="text-muted fw-bold">One-Click Auto-Login:</small>
+          </div>
+          <div class="d-grid gap-2 d-sm-flex flex-wrap">
+            <a href="{{ url_for('demo_login', role='admin') }}" class="btn btn-outline-dark btn-sm flex-fill">
+              <i class="fa-solid fa-shield-halved text-danger me-1"></i> Admin
+            </a>
+            <a href="{{ url_for('demo_login', role='donor') }}" class="btn btn-outline-success btn-sm flex-fill">
+              <i class="fa-solid fa-store text-success me-1"></i> Donor
+            </a>
+            <a href="{{ url_for('demo_login', role='ngo') }}" class="btn btn-outline-primary btn-sm flex-fill">
+              <i class="fa-solid fa-hands-holding-child text-primary me-1"></i> NGO
+            </a>
+            <a href="{{ url_for('demo_login', role='volunteer') }}" class="btn btn-outline-warning btn-sm text-dark flex-fill">
+              <i class="fa-solid fa-motorcycle text-warning me-1"></i> Volunteer
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Login Card -->
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white text-center py-4">
+          <i class="fa-solid fa-hand-holding-heart fa-2x mb-2"></i>
+          <h4 class="fw-bold mb-0">System Authentication</h4>
+          <p class="small text-white-50 mb-0">Sign in to your authorized portal</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+              <label for="email" class="form-label fw-bold small text-secondary">Registered Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+                <input type="email" class="form-control border-start-0" id="email" name="email" placeholder="name@domain.com" required autofocus>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="password" class="form-label fw-bold small text-secondary">Account Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" class="form-control border-start-0" id="password" name="password" placeholder="••••••••" required>
+              </div>
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-right-to-bracket me-2"></i> Secure Log In
+              </button>
+            </div>
+          </form>
+
+          <hr class="my-4">
+
+          <div class="text-center small">
+            <span class="text-muted">Don't have an account yet?</span>
+            <div class="mt-2 d-flex justify-content-center gap-3">
+              <a href="{{ url_for('register_donor') }}" class="text-success fw-bold text-decoration-none">
+                <i class="fa-solid fa-store me-1"></i> Register as Donor
+              </a>
+              <span class="text-muted">|</span>
+              <a href="{{ url_for('register_ngo') }}" class="text-primary fw-bold text-decoration-none">
+                <i class="fa-solid fa-hands-holding-child me-1"></i> Register as NGO
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

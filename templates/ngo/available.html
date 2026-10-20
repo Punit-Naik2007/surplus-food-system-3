@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Available Surplus Food - Browse & Claim{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Hero / Filter Header -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+    <div class="card-body p-4">
+      <div class="row align-items-center mb-3">
+        <div class="col-md-7">
+          <span class="badge bg-success-subtle text-success fw-bold px-3 py-1 rounded-pill mb-1">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Food Salvage Marketplace
+          </span>
+          <h2 class="fw-bold mb-0">Browse Available Food Donations</h2>
+          <p class="text-muted small mb-0">Prioritized using the Nirman Multi-Factor Urgency Model to salvage perishable meals first.</p>
+        </div>
+
+        <div class="col-md-5 text-md-end mt-3 mt-md-0">
+          {% if current_user and current_user.role in ('ngo', 'volunteer') and not current_user.is_verified %}
+            <span class="badge bg-warning-subtle text-dark p-2 border">
+              <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Acceptance Locked: Pending Admin Verification
+            </span>
+          {% elif not current_user %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline-success btn-sm fw-bold">
+              <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In to Claim Food
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Search & Filter Controls Form -->
+      <form method="GET" action="{{ url_for('available_food') }}" class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input type="text" class="form-control border-start-0" name="search" value="{{ search_q }}" placeholder="Search food title, keyword...">
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-md-3">
+          <select class="form-select" name="category" onchange="this.form.submit()">
+            <option value="ALL" {% if current_category == 'ALL' %}selected{% endif %}>All Categories</option>
+            <option value="Cooked Meals" {% if current_category == 'Cooked Meals' %}selected{% endif %}>Cooked Meals</option>
+            <option value="Bakery Items" {% if current_category == 'Bakery Items' %}selected{% endif %}>Bakery Items</option>
+            <option value="Fruits" {% if current_category == 'Fruits' %}selected{% endif %}>Fresh Fruits</option>
+            <option value="Vegetables" {% if current_category == 'Vegetables' %}selected{% endif %}>Fresh Vegetables</option>
+            <option value="Packaged Food" {% if current_category == 'Packaged Food' %}selected{% endif %}>Packaged Food</option>
+            <option value="Other" {% if current_category == 'Other' %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+
+        <div class="col-sm-6 col-md-2">
+          <select class="form-select" name="city" onchange="this.form.submit()">
+            <option value="ALL" {% if current_city == 'ALL' %}selected{% endif %}>All Cities</option>
+            {% for c in cities %}
+              <option value="{{ c }}" {% if current_city|lower == c|lower %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-sm-6 col-md-2">
+          <select class="form-select" name="sort" onchange="this.form.submit()">
+            <option value="urgency" {% if current_sort == 'urgency' %}selected{% endif %}>Sort: Highest Urgency</option>
+            <option value="deadline" {% if current_sort == 'deadline' %}selected{% endif %}>Sort: Earliest Cutoff</option>
+            <option value="quantity" {% if current_sort == 'quantity' %}selected{% endif %}>Sort: Largest Volume</option>
+          </select>
+        </div>
+
+        <div class="col-sm-6 col-md-1">
+          <a href="{{ url_for('available_food') }}" class="btn btn-outline-secondary w-100" title="Reset Filters">
+            <i class="fa-solid fa-rotate-left"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Listings Grid -->
+  <div class="row g-4">
+    {% for item in donations %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card card-custom h-100 shadow-sm">
+          <div class="donation-img-wrap">
+            <img src="{{ item.image_url }}" alt="{{ item.food_name }}">
+            <span class="card-badge-top badge {{ item.urgency_level|urgency_badge }} shadow-sm">
+              <i class="fa-solid fa-bolt me-1"></i> {{ item.urgency_level }} (Score: {{ item.urgency_score|round(0)|int }})
+            </span>
+          </div>
+
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-light text-dark border">{{ item.category }}</span>
+              <span class="small text-muted fw-semibold">
+                <i class="fa-solid fa-location-dot text-danger me-1"></i> {{ item.city }}
+              </span>
+            </div>
+
+            <h5 class="card-title fw-bold text-dark mb-1">{{ item.food_name }}</h5>
+            <p class="text-secondary small mb-3 flex-grow-1" style="min-height: 40px;">
+              {{ item.description|truncate(110) }}
+            </p>
+
+            <!-- Key Logistics Attributes -->
+            <div class="bg-light p-3 rounded-3 mb-3 small">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted"><i class="fa-solid fa-scale-balanced me-1"></i> Quantity:</span>
+                <strong class="text-dark">{{ item.quantity }} {{ item.quantity_unit }}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted"><i class="fa-solid fa-temperature-low me-1"></i> Storage:</span>
+                <span class="fw-semibold">{{ item.storage_condition }}</span>
+              </div>
+              <div class="d-flex justify-content-between text-danger">
+                <span><i class="fa-solid fa-hourglass-half me-1"></i> Pickup Cutoff:</span>
+                <strong>{{ item.pickup_deadline|format_dt('%d %b, %I:%M %p') }}</strong>
+              </div>
+            </div>
+
+            <!-- Donor Info Tag -->
+            <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+              <i class="fa-solid fa-store text-success"></i>
+              <span class="text-truncate">Offered by: <strong>{{ item.donor_org or item.donor_name }}</strong></span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+              <a href="{{ url_for('view_donation', id=item.id) }}" class="btn btn-outline-secondary btn-sm flex-fill">
+                <i class="fa-solid fa-circle-info me-1"></i> Details
+              </a>
+
+              {% if current_user and current_user.role in ('ngo', 'volunteer') %}
+                {% if current_user.is_verified %}
+                  <form action="{{ url_for('accept_donation', id=item.id) }}" method="POST" class="flex-fill" data-confirm="Accept this donation for pickup? This will reserve it immediately.">
+                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                      <i class="fa-solid fa-check me-1"></i> Accept Food
+                    </button>
+                  </form>
+                {% else %}
+                  <button class="btn btn-secondary btn-sm flex-fill" disabled title="Pending Admin Verification">
+                    Unverified
+                  </button>
+                {% endif %}
+              {% elif not current_user %}
+                <a href="{{ url_for('login') }}" class="btn btn-success btn-sm flex-fill fw-bold">
+                  Sign In to Claim
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="col-12 text-center py-5">
+        <div class="card border-0 shadow-sm p-5 bg-white rounded-4">
+          <i class="fa-solid fa-utensils fa-4x text-muted opacity-50 mb-3"></i>
+          <h4 class="fw-bold text-dark">No Available Surplus Food Matches Your Criteria</h4>
+          <p class="text-muted small mb-4">Try clearing active category or city filters, or check back soon as restaurants regularly list banquet and dining excess.</p>
+          <div>
+            <a href="{{ url_for('available_food') }}" class="btn btn-outline-success fw-bold px-4">
+              <i class="fa-solid fa-rotate-left me-1"></i> Reset Search Filters
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Transparent System Architecture Footnote -->
+  <div class="mt-5 p-3 bg-light rounded-3 border small text-muted text-center">
+    <i class="fa-solid fa-info-circle text-primary me-1"></i>
+    <strong>Exhibition Note:</strong> Geographic matching is performed based on registered municipality and service zone boundaries. Real-time GPS triangulation is omitted in alignment with prototype scope.
+  </div>
+</div>
+{% endblock %}
